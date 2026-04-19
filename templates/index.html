@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Osmania Results Dashboard</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+
+<!-- ═══════════════════════════════════════════
+     DYNAMIC NAVIGATION
+═══════════════════════════════════════════ -->
+<nav class="navbar" id="navbar">
+
+  <!-- Logo -->
+  <a href="/" class="nav-logo">
+    <div class="nav-logo-icon">🎓</div>
+    <div class="nav-logo-text">
+      Osmania
+      <span>Results Dashboard</span>
+    </div>
+  </a>
+
+  <!-- Nav Links -->
+  <ul class="nav-links" id="navLinks">
+    <li>
+      <a href="#search" class="active" data-section="search">
+        🔍 Search
+      </a>
+    </li>
+    <li>
+      <a href="#results" data-section="results">
+        📊 Results
+      </a>
+    </li>
+    <li>
+      <a href="#history-section" data-section="history">
+        🕑 History
+        {% if history %}
+        <span class="nav-badge">{{ history|length }}</span>
+        {% endif %}
+      </a>
+    </li>
+  </ul>
+
+  <!-- Mobile hamburger -->
+  <div class="nav-hamburger" id="hamburger" onclick="toggleMenu()">
+    <span></span><span></span><span></span>
+  </div>
+</nav>
+
+<!-- ═══════════════════════════════════════════
+     PAGE LAYOUT
+═══════════════════════════════════════════ -->
+<div class="page-wrapper">
+
+  <!-- ── MAIN CONTENT ── -->
+  <main class="main-content">
+
+    <!-- Hero -->
+    <section class="hero" id="search">
+      <div class="hero-tag">✦ Osmania University · MCA 2024–26</div>
+      <h1>Check Your <em>Semester</em><br>Result Instantly</h1>
+      <p>Enter your hall ticket number to fetch grades, SGPA, and subject-wise performance.</p>
+    </section>
+
+    <!-- Search Card -->
+    <div class="search-card">
+      <label for="htno">Hall Ticket Number</label>
+      <form method="POST" id="resultForm">
+        <div class="input-row">
+          <input
+            type="text"
+            name="htno"
+            id="htno"
+            placeholder="e.g. 24MCE001"
+            autocomplete="off"
+            spellcheck="false"
+            required
+          >
+          <button type="submit" class="btn-primary" id="submitBtn">
+            <span class="btn-text">🔍 &nbsp;Fetch Result</span>
+          </button>
+        </div>
+      </form>
+    </div>
+
+    <!-- ── RESULT SECTION ── -->
+    {% if result %}
+    <div class="result-card" id="results">
+
+      <!-- Result Header -->
+      <div class="result-header">
+        <div>
+          <div class="result-name">{{ result.name }}</div>
+          <div class="result-meta">
+            <span class="status-pill {{ result.status|lower }}">
+              {% if result.status == "PASSED" %}✅
+              {% elif result.status == "PROMOTED" %}📈
+              {% else %}ℹ️{% endif %}
+              {{ result.status }}
+            </span>
+          </div>
+        </div>
+        {% if result.sgpa is not none %}
+        <div class="sgpa-badge">
+          <div class="sgpa-value">{{ result.sgpa }}</div>
+          <div class="sgpa-label">SGPA</div>
+        </div>
+        {% else %}
+        <div class="sgpa-badge">
+          <div class="sgpa-value" style="font-size:16px; color:var(--red);">N/A</div>
+          <div class="sgpa-label" style="color:var(--red);">Has Failed Subject</div>
+        </div>
+        {% endif %}
+      </div>
+
+      <!-- Subjects Table -->
+      {% if result.subjects %}
+      <div class="subjects-section">
+        <div class="section-title">📚 Subject Performance</div>
+        <table class="subjects-table">
+          <thead>
+            <tr>
+              <th>Code</th>
+              <th>Subject</th>
+              <th>Credits</th>
+              <th>Grade</th>
+              <th>Points</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for sub in result.subjects %}
+            <tr>
+              <td>{{ sub.code }}</td>
+              <td>{{ sub.name }}</td>
+              <td>{{ sub.credits }}</td>
+              <td>
+                <span class="grade-chip {{ sub.grade|lower }}">{{ sub.grade }}</span>
+              </td>
+              <td>{{ sub.point }}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Stats Bar -->
+      <div class="stats-bar">
+        <div class="stat-item">
+          <div class="stat-value">{{ result.subjects|length }}</div>
+          <div class="stat-label">Subjects</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-value">
+            {{ result.subjects | selectattr("grade", "ne", "F") | selectattr("grade", "ne", "FAIL") | list | length }}
+          </div>
+          <div class="stat-label">Passed</div>
+        </div>
+        <div class="stat-item">
+          {% if result.sgpa is not none %}
+          <div class="stat-value">{{ result.sgpa }}</div>
+          <div class="stat-label">SGPA</div>
+          {% else %}
+          <div class="stat-value" style="color:var(--red); font-size:16px;">N/A</div>
+          <div class="stat-label" style="color:var(--red);">SGPA</div>
+          {% endif %}
+        </div>
+        <div class="stat-item">
+          <div class="stat-value">
+            {{ result.subjects | sum(attribute='credits') | int }}
+          </div>
+          <div class="stat-label">Credits</div>
+        </div>
+      </div>
+
+      {% else %}
+      <div class="subjects-section">
+        <p style="color:var(--muted); text-align:center; padding: 20px 0;">No subject data found.</p>
+      </div>
+      {% endif %}
+    </div>
+    {% endif %}
+
+    <!-- Footer -->
+    <footer>
+      <div>Developed by <strong>Ramagiri Srinath</strong> · MCA 2024–26</div>
+      <div class="footer-right">Osmania University · Hyderabad</div>
+    </footer>
+
+  </main>
+
+  <!-- ── SIDEBAR / HISTORY ── -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+      <h3 id="history-section">Recent Searches</h3>
+      {% if history %}
+      <span class="sidebar-count">{{ history|length }}</span>
+      {% endif %}
+    </div>
+
+    {% if history %}
+    <div class="sidebar-list">
+      {% for item in history|reverse %}
+      <div class="history-item" onclick="fillHtno('{{ item.htno }}')">
+        <div class="history-avatar">{{ item.name[0] if item.name else '?' }}</div>
+        <div class="history-info">
+          <div class="history-htno">{{ item.htno }}</div>
+          <div class="history-name">{{ item.name if item.name else 'Unknown' }}</div>
+        </div>
+        <div class="history-status-dot {{ item.status|lower }}"></div>
+      </div>
+      {% endfor %}
+    </div>
+
+    {% else %}
+    <div class="sidebar-empty">
+      <div class="empty-icon">🔍</div>
+      <div>No searches yet.<br>Results will appear here.</div>
+    </div>
+    {% endif %}
+  </aside>
+
+</div><!-- end page-wrapper -->
+
+
+<!-- ═══════════════════════════════════════════
+     JAVASCRIPT — Dynamic Nav + UX
+═══════════════════════════════════════════ -->
+<script>
+  const navbar        = document.getElementById('navbar');
+  const navLinksEl    = document.getElementById('navLinks');
+  const sidebarEl     = document.getElementById('sidebar');
+  const overlayEl     = document.getElementById('sidebarOverlay');
+  const allNavLinks   = document.querySelectorAll('.nav-links a[data-section]');
+
+  // ── Sticky nav shadow ─────────────────────────────────────
+  window.addEventListener('scroll', () => {
+    navbar.classList.toggle('scrolled', window.scrollY > 10);
+  });
+
+  // ── Hamburger toggle ──────────────────────────────────────
+  function toggleMenu() {
+    navLinksEl.classList.toggle('open');
+  }
+
+  function closeMenu() {
+    navLinksEl.classList.remove('open');
+  }
+
+  // ── Sidebar drawer ────────────────────────────────────────
+  function openSidebar() {
+    closeMenu();                          // always close hamburger first
+    sidebarEl.classList.add('open');
+    overlayEl.classList.add('active');
+    document.body.style.overflow = 'hidden';
+  }
+
+  function closeSidebar() {
+    sidebarEl.classList.remove('open');
+    overlayEl.classList.remove('active');
+    document.body.style.overflow = '';
+  }
+
+  // Overlay tap → close sidebar (both click and touchend for mobile)
+  overlayEl.addEventListener('click', closeSidebar);
+  overlayEl.addEventListener('touchend', (e) => { e.preventDefault(); closeSidebar(); });
+
+  // ── Nav link clicks ───────────────────────────────────────
+  allNavLinks.forEach(link => {
+    link.addEventListener('click', (e) => {
+      const section = link.dataset.section;
+
+      // History link: open sidebar on mobile, close menu always
+      if (section === 'history') {
+        e.preventDefault();
+        closeMenu();
+        if (window.innerWidth <= 768) {
+          openSidebar();
+        } else {
+          // Desktop: just close menu (sidebar always visible)
+        }
+        return;
+      }
+
+      // Other links: smooth scroll + close menu
+      e.preventDefault();
+      closeMenu();
+      const target = document.getElementById(section === 'search' ? 'search' : 'results');
+      if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+      allNavLinks.forEach(l => l.classList.remove('active'));
+      link.classList.add('active');
+    });
+  });
+
+  // ── Loading state on submit ───────────────────────────────
+  document.getElementById('resultForm').addEventListener('submit', () => {
+    const btn = document.getElementById('submitBtn');
+    btn.classList.add('loading');
+    btn.disabled = true;
+  });
+
+  // ── History item tap → fill input + close ────────────────
+  function fillHtno(htno) {
+    document.getElementById('htno').value = htno;
+    closeSidebar();
+    setTimeout(() => {
+      document.getElementById('search').scrollIntoView({ behavior: 'smooth' });
+      document.getElementById('htno').focus();
+    }, 150);
+  }
+
+  // ── Active link on scroll ─────────────────────────────────
+  const scrollMap = [
+    { id: 'search',  sec: 'search' },
+    { id: 'results', sec: 'results' },
+  ];
+
+  window.addEventListener('scroll', () => {
+    const y = window.scrollY + 100;
+    scrollMap.forEach(({ id, sec }) => {
+      const el = document.getElementById(id);
+      const lk = document.querySelector(`[data-section="${sec}"]`);
+      if (!el || !lk) return;
+      if (y >= el.offsetTop && y < el.offsetTop + el.offsetHeight) {
+        allNavLinks.forEach(l => l.classList.remove('active'));
+        lk.classList.add('active');
+      }
+    });
+  });
+</script>
+
+<!-- Sidebar overlay backdrop (mobile) -->
+<div class="sidebar-overlay" id="sidebarOverlay" onclick="closeSidebar()"></div>
+
+<!-- Floating History button (mobile only) -->
+{% if history %}
+<button class="history-fab" onclick="openSidebar()">
+  🕑 History
+  <span class="fab-badge">{{ history|length }}</span>
+</button>
+{% else %}
+<button class="history-fab" onclick="openSidebar()">
+  🕑 History
+</button>
+{% endif %}
+
+</body>
+</html>
