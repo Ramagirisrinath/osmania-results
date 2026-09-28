@@ -7,7 +7,7 @@ urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 app = Flask(__name__)
 
-BASE_URL = "https://www.osmania.ac.in/res07/20260188.jsp"
+BASE_URL = "https://www.osmania.ac.in/res07/20250469.jsp"
 
 history = []
 
